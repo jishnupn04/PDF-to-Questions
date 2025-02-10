@@ -1,3 +1,4 @@
+import os
 import fitz  # PyMuPDF
 from g4f.client import Client
 from django.http import JsonResponse
@@ -21,7 +22,7 @@ def generate_questions_from_text(text, marks=5):
     # Using g4f's client to call GPT-4 and generate questions
     response = client.chat.completions.create(
         model="gpt-4o-mini",  # or any smaller model for faster response like gpt-4-mini
-        messages=[{"role": "Teacher", "content": prompt}],
+        messages=[{"role": "user", "content": prompt}],  # "user" is the correct role
         web_search=False
     )
 
@@ -35,8 +36,13 @@ def upload_pdf(request):
         pdf = request.FILES["pdf"]
         marks = int(request.POST.get("marks", 5))  # Default to 5 marks
 
-        # Save the PDF file (can use Django's storage system or local storage)
-        saved_path = f"uploads/{pdf.name}"
+        # Ensure the "uploads" directory exists
+        upload_dir = "uploads"
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+
+        # Save the PDF file
+        saved_path = os.path.join(upload_dir, pdf.name)
         with open(saved_path, "wb") as f:
             for chunk in pdf.chunks():
                 f.write(chunk)
